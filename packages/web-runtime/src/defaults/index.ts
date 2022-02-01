@@ -8,7 +8,6 @@ import { createStore } from 'vuex-extensions'
 import Vuex from 'vuex'
 export { default as Vue } from './vue'
 export { default as DesignSystem } from 'owncloud-design-system'
-export { default as Router } from '../router'
 
 export const store = createStore(Vuex.Store, { ...Store })
 export const pages = { success: App, failure: missingOrInvalidConfigPage }

@@ -9,66 +9,120 @@ import Account from '../pages/account.vue'
 
 Vue.use(Router)
 
+// type: patch
+// temporary patch till we have upgraded web to the latest vue router which make this obsolete
+// this takes care that routes like 'foo/bar/baz' which by default would be converted to 'foo%2Fbar%2Fbaz' stay as they are
+// should immediately go away and be removed after finalizing the update
+// to apply the patch to a route add meta.patchCleanPath = true to it
+// to patch needs to be enabled on a route level, to do so add meta.patchCleanPath = true property to the route
+const patchRouter = (router) => {
+  const bindMatcher = router.match.bind(router)
+  const cleanPath = (route) =>
+    [
+      ['%2F', '/'],
+      ['//', '/']
+    ].reduce((path, rule) => path.replaceAll(rule[0], rule[1]), route || '')
+
+  router.match = (raw, current, redirectFrom) => {
+    const bindMatch = bindMatcher(raw, current, redirectFrom)
+
+    if (!get(bindMatch, 'meta.patchCleanPath', false)) {
+      return bindMatch
+    }
+
+    return {
+      ...bindMatch,
+      path: cleanPath(bindMatch.path),
+      fullPath: cleanPath(bindMatch.fullPath)
+    }
+  }
+
+  return router
+}
+
 // just a dummy function to trick gettext tools
 function $gettext(msg) {
   return msg
 }
 
-const router = new Router({
-  //  mode: 'history',
-  routes: [
-    {
-      path: '/login',
-      name: 'login',
-      components: {
-        fullscreen: LoginPage
+const base = document.querySelector('base')
+export const router = patchRouter(
+  new Router({
+    ...(base && {
+      mode: 'history',
+      base: new URL(base.href).pathname
+    }),
+    routes: [
+      {
+        path: '/login',
+        name: 'login',
+        components: {
+          fullscreen: LoginPage
+        },
+        meta: { auth: false, hideHeadbar: true, title: $gettext('Login') }
       },
-      meta: { auth: false, hideHeadbar: true, title: $gettext('Login') }
-    },
-    {
-      path: '/oidc-callback',
-      components: {
-        fullscreen: OidcCallbackPage
+      {
+        path: '/oidc-callback',
+        components: {
+          fullscreen: OidcCallbackPage
+        },
+        meta: { auth: false, hideHeadbar: true, title: $gettext('Oidc callback') }
       },
-      meta: { auth: false, hideHeadbar: true, title: $gettext('Oidc callback') }
-    },
-    {
-      path: '/oidc-silent-redirect',
-      components: {
-        fullscreen: OidcCallbackPage
+      {
+        path: '/oidc-silent-redirect',
+        components: {
+          fullscreen: OidcCallbackPage
+        },
+        meta: { auth: false, hideHeadbar: true, title: $gettext('Oidc redirect') }
       },
-      meta: { auth: false, hideHeadbar: true, title: $gettext('Oidc redirect') }
-    },
-    {
-      path: '/f/:fileId',
-      name: 'privateLink',
-      redirect: '/files/ops/resolver/private-link/:fileId',
-      meta: { hideHeadbar: true, title: $gettext('Private link') }
-    },
-    {
-      path: '/s/:token',
-      name: 'publicLink',
-      redirect: '/files/ops/resolver/public-link/:token',
-      meta: { auth: false, hideHeadbar: true, title: $gettext('Public link') }
-    },
-    {
-      path: '/access-denied',
-      name: 'accessDenied',
-      components: {
-        fullscreen: AccessDeniedPage
+      {
+        path: '/f/:fileId',
+        name: 'privateLink',
+        redirect: '/files/ops/resolver/private-link/:fileId',
+        meta: { hideHeadbar: true, title: $gettext('Private link') }
       },
-      meta: { auth: false, hideHeadbar: true, title: $gettext('Access denied') }
-    },
-    {
-      path: '/account',
-      name: 'account',
-      components: {
-        app: Account
+      {
+        path: '/s/:token',
+        name: 'publicLink',
+        redirect: '/files/ops/resolver/public-link/:token',
+        meta: { auth: false, hideHeadbar: true, title: $gettext('Public link') }
       },
-      meta: { title: $gettext('Account') }
-    }
-  ]
-})
+      {
+        path: '/access-denied',
+        name: 'accessDenied',
+        components: {
+          fullscreen: AccessDeniedPage
+        },
+        meta: { auth: false, hideHeadbar: true, title: $gettext('Access denied') }
+      },
+      {
+        path: '/account',
+        name: 'account',
+        components: {
+          app: Account
+        },
+        meta: { title: $gettext('Account') }
+      }
+    ]
+  })
+)
+
+export const buildUrl = (pathname) => {
+  const baseUrl = new URL(window.location.href.split('#')[0])
+  if (baseUrl.pathname.endsWith('/index.html')) {
+    baseUrl.pathname = baseUrl.pathname.substr(0, baseUrl.pathname.length - 11)
+  }
+
+  if (/\.(html?)$/i.test(pathname)) {
+    baseUrl.pathname = base
+      ? pathname
+      : [...baseUrl.pathname.split('/'), ...pathname.split('/')].filter(Boolean).join('/')
+  } else {
+    baseUrl[base ? 'pathname' : 'hash'] = router.resolve(pathname).href
+  }
+
+  return baseUrl.href
+}
 
 router.beforeEach(function (to, from, next) {
   const store = Vue.$store
@@ -117,36 +171,3 @@ const isAuthRequired = (router, to) => {
   }
   return false
 }
-
-// type: patch
-// temporary patch till we have upgraded web to the latest vue router which make this obsolete
-// this takes care that routes like 'foo/bar/baz' which by default would be converted to 'foo%2Fbar%2Fbaz' stay as they are
-// should immediately go away and be removed after finalizing the update
-// to apply the patch to a route add meta.patchCleanPath = true to it
-// to patch needs to be enabled on a route level, to do so add meta.patchCleanPath = true property to the route
-const patchRouter = (router) => {
-  const bindMatcher = router.match.bind(router)
-  const cleanPath = (route) =>
-    [
-      ['%2F', '/'],
-      ['//', '/']
-    ].reduce((path, rule) => path.replaceAll(rule[0], rule[1]), route || '')
-
-  router.match = (raw, current, redirectFrom) => {
-    const bindMatch = bindMatcher(raw, current, redirectFrom)
-
-    if (!get(bindMatch, 'meta.patchCleanPath', false)) {
-      return bindMatch
-    }
-
-    return {
-      ...bindMatch,
-      path: cleanPath(bindMatch.path),
-      fullPath: cleanPath(bindMatch.fullPath)
-    }
-  }
-
-  return router
-}
-
-export default patchRouter(router)
