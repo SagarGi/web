@@ -57,7 +57,7 @@ const newFileHandlers = [
       extension: 'txt'
     },
     routes,
-    menuTitle: () => 'New plain text file...'
+    menuTitle: () => 'New plain text file'
   },
   {
     ext: 'md',
@@ -67,7 +67,7 @@ const newFileHandlers = [
       extension: 'md'
     },
     routes,
-    menuTitle: () => 'New mark-down file...'
+    menuTitle: () => 'New mark-down file'
   },
   {
     ext: 'drawio',
@@ -78,7 +78,7 @@ const newFileHandlers = [
       extension: 'drawio'
     },
     routes,
-    menuTitle: () => 'New draw.io document...'
+    menuTitle: () => 'New draw.io document'
   }
 ]
 

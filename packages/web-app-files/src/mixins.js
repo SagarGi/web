@@ -71,15 +71,6 @@ export default {
       }
       return 'file'
     },
-    checkIfBrowserSupportsFolderUpload() {
-      const el = document.createElement('input')
-      el.type = 'file'
-      return (
-        typeof el.webkitdirectory !== 'undefined' ||
-        typeof el.mozdirectory !== 'undefined' ||
-        typeof el.directory !== 'undefined'
-      )
-    },
     checkIfElementExists(element) {
       const name = element.name || element
       return this.files.find((file) => file.name === name)

@@ -30,30 +30,112 @@
         <div
           v-if="showActions || selectedFiles.length > 0 || hasBulkActions"
           class="oc-flex-1 oc-flex oc-flex-start"
+          style="gap: 15px"
         >
           <template v-if="showActions && areDefaultActionsVisible">
+            <template v-if="createFileActionsAvailable">
+              <oc-button
+                id="new-file-menu-btn"
+                key="new-file-menu-btn-enabled"
+                v-oc-tooltip="newButtonTooltip"
+                :aria-label="newButtonAriaLabel"
+                variation="inverse"
+                :disabled="uploadOrFileCreationBlocked"
+                class="oc-background-primary-gradient"
+              >
+                <oc-icon name="add" />
+                <translate>New</translate>
+              </oc-button>
+              <oc-drop
+                drop-id="new-file-menu-drop"
+                toggle="#new-file-menu-btn"
+                mode="click"
+                close-on-click
+                class="oc-width-auto"
+                padding-size="small"
+              >
+                <oc-list id="create-list">
+                  <li class="oc-py-s" style="border-bottom: 1px solid var(--oc-color-border)">
+                    <oc-button
+                      id="new-folder-btn"
+                      appearance="raw"
+                      @click="showCreateResourceModal"
+                    >
+                      <oc-icon name="resource-type-folder" />
+                      <translate>New folder</translate>
+                    </oc-button>
+                  </li>
+                  <li
+                    v-for="(newFileHandler, key) in newFileHandlersForRoute"
+                    :key="key"
+                    class="oc-py-s"
+                  >
+                    <oc-button
+                      appearance="raw"
+                      :class="['new-file-btn-' + newFileHandler.ext]"
+                      @click="
+                        showCreateResourceModal(false, newFileHandler.ext, newFileHandler.action)
+                      "
+                    >
+                      <!-- would very much like to create an icon with newFileHandler.ext -->
+                      <!-- <oc-icon :name="`resource-type-${newFileHandler.ext}`" /> -->
+                      <oc-icon :name="newFileHandler.icon || 'save'" />
+                      <span>{{ newFileHandler.menuTitle($gettext) }}</span>
+                    </oc-button>
+                  </li>
+                  <template v-if="mimetypesAllowedForCreation">
+                    <li
+                      v-for="(mimetype, key) in mimetypesAllowedForCreation"
+                      :key="key"
+                      class="oc-py-s"
+                    >
+                      <oc-button
+                        appearance="raw"
+                        @click="showCreateResourceModal(false, mimetype.ext, false, true)"
+                      >
+                        <!-- would very much like to create an icon with mimetype.ext -->
+                        <oc-icon :name="mimetype.icon || 'file'" />
+                        <translate :translate-params="{ name: mimetype.name }"
+                          >New %{name}</translate
+                        >
+                      </oc-button>
+                    </li>
+                  </template>
+                </oc-list>
+              </oc-drop>
+            </template>
+            <template v-else>
+              <oc-button
+                id="new-folder-btn"
+                variation="inverse"
+                :disabled="uploadOrFileCreationBlocked"
+                class="oc-background-primary-gradient"
+                @click="showCreateResourceModal"
+              >
+                <oc-icon name="resource-type-folder" />
+                <translate style="display: ruby">New folder</translate>
+              </oc-button>
+            </template>
             <oc-button
-              id="new-file-menu-btn"
-              key="new-file-menu-btn-enabled"
-              v-oc-tooltip="newButtonTooltip"
-              :aria-label="newButtonAriaLabel"
-              variation="inverse"
-              :disabled="isNewBtnDisabled"
-              class="oc-mb-xs oc-background-primary-gradient"
+              id="upload-menu-btn"
+              key="upload-menu-btn-enabled"
+              v-oc-tooltip="uploadButtonTooltip"
+              :aria-label="uploadButtonAriaLabel"
+              :disabled="uploadOrFileCreationBlocked"
             >
-              <oc-icon name="add" />
-              <translate>New</translate>
+              <oc-icon name="upload" fill-type="line" />
+              <translate>Upload</translate>
             </oc-button>
             <oc-drop
-              drop-id="new-file-menu-drop"
-              toggle="#new-file-menu-btn"
+              drop-id="upload-menu-drop"
+              toggle="#upload-menu-btn"
               mode="click"
+              class="oc-width-auto"
               close-on-click
-              :options="{ delayHide: 0 }"
               padding-size="small"
             >
-              <ul class="oc-list">
-                <li class="oc-my-xs">
+              <oc-list>
+                <li class="oc-p-s">
                   <file-upload
                     :path="currentPath"
                     :headers="headers"
@@ -62,7 +144,7 @@
                     @progress="onFileProgress"
                   />
                 </li>
-                <li v-if="checkIfBrowserSupportsFolderUpload">
+                <li class="oc-p-s">
                   <folder-upload
                     v-if="!isIE11()"
                     :root-path="currentPath"
@@ -73,53 +155,7 @@
                     @progress="onFileProgress"
                   />
                 </li>
-                <li>
-                  <div>
-                    <oc-button
-                      id="new-folder-btn"
-                      appearance="raw"
-                      class="oc-width-1-1"
-                      justify-content="left"
-                      @click="showCreateResourceModal"
-                    >
-                      <oc-icon name="folder-add" />
-                      <translate>New folder…</translate>
-                    </oc-button>
-                  </div>
-                </li>
-                <li v-for="(newFileHandler, key) in newFileHandlersForRoute" :key="key">
-                  <div>
-                    <oc-button
-                      appearance="raw"
-                      justify-content="left"
-                      :class="['new-file-btn-' + newFileHandler.ext, 'oc-width-1-1']"
-                      @click="
-                        showCreateResourceModal(false, newFileHandler.ext, newFileHandler.action)
-                      "
-                    >
-                      <oc-icon :name="newFileHandler.icon || 'save'" />
-                      <span>{{ newFileHandler.menuTitle($gettext) }}</span>
-                    </oc-button>
-                  </div>
-                </li>
-                <template v-if="mimetypesAllowedForCreation">
-                  <li v-for="(mimetype, key) in mimetypesAllowedForCreation" :key="key">
-                    <div>
-                      <oc-button
-                        appearance="raw"
-                        justify-content="left"
-                        :class="['oc-width-1-1']"
-                        @click="showCreateResourceModal(false, mimetype.ext, false, true)"
-                      >
-                        <oc-icon :name="mimetype.icon || 'file'" />
-                        <translate :translate-params="{ name: mimetype.name }"
-                          >New %{name}</translate
-                        >
-                      </oc-button>
-                    </div>
-                  </li>
-                </template>
-              </ul>
+              </oc-list>
             </oc-drop>
           </template>
           <size-info v-if="hasBulkActions && selectedFiles.length > 0" class="oc-mr oc-visible@l" />
@@ -194,12 +230,15 @@ export default {
       }
       return this.mimeTypes.filter((mimetype) => mimetype.allow_creation) || []
     },
+    createFileActionsAvailable() {
+      return this.newFileHandlersForRoute.length > 0 || this.mimetypesAllowedForCreation.length > 0
+    },
     newButtonTooltip() {
       if (!this.canUpload) {
-        return this.$gettext('You have no permission to upload!')
+        return this.$gettext('You have no permission to create new files!')
       }
       if (!this.hasFreeSpace) {
-        return this.$gettext('You have not enough space left to upload!')
+        return this.$gettext('You have not enough space left to create new files!')
       }
       return null
     },
@@ -208,7 +247,23 @@ export default {
       if (tooltip) {
         return tooltip
       }
-      return this.$gettext('Add files or folders')
+      return this.$gettext('Create new files or folders')
+    },
+    uploadButtonTooltip() {
+      if (!this.canUpload) {
+        return this.$gettext('You have no permission to upload!')
+      }
+      if (!this.hasFreeSpace) {
+        return this.$gettext('You have not enough space left to upload!')
+      }
+      return null
+    },
+    uploadButtonAriaLabel() {
+      const tooltip = this.uploadButtonTooltip
+      if (tooltip) {
+        return tooltip
+      }
+      return this.$gettext('Upload files or folders')
     },
 
     currentPath() {
@@ -305,7 +360,7 @@ export default {
       return this.selectedFiles.length < 1
     },
 
-    isNewBtnDisabled() {
+    uploadOrFileCreationBlocked() {
       return !this.canUpload || !this.hasFreeSpace
     },
 
@@ -376,6 +431,7 @@ export default {
           ? this.checkNewFolderName(defaultName)
           : this.checkNewFileName(defaultName),
         onCancel: this.hideModal,
+        // what happens below looks wrong, I don't get it
         onConfirm: isFolder
           ? this.addNewFolder
           : addAppProviderFile
@@ -688,6 +744,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+#create-list li {
+  border: 1px solid transparent;
+  button {
+    gap: 10px;
+    justify-content: left;
+    widows: 100%;
+  }
+}
 .files-app-bar {
   background-color: var(--oc-color-background-default);
   box-sizing: border-box;
