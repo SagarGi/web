@@ -1,29 +1,35 @@
 <template>
-  <div
-    class="oc-login oc-height-viewport"
-    :style="{ backgroundImage: 'url(' + backgroundImg + ')' }"
-  >
+  <div class="oc-height-1-1">
     <h1 class="oc-invisible-sr">{{ pageTitle }}</h1>
-    <div class="oc-login-card oc-position-center">
-      <img class="oc-login-logo" :src="logoImg" alt="" :aria-hidden="true" />
-      <div class="oc-login-card-body">
-        <template v-if="loading">
-          <h2 class="oc-login-card-title">
+    <div class="oc-card oc-border oc-rounded oc-position-center oc-text-center oc-width-large">
+      <template v-if="loading">
+        <div class="oc-card-header">
+          <h2>
             <translate>Loading public link…</translate>
           </h2>
+        </div>
+        <div class="oc-card-body">
           <oc-spinner :aria-hidden="true" />
-        </template>
-        <template v-else-if="errorMessage">
-          <h2 class="oc-login-card-title oc-login-card-error">
+        </div>
+      </template>
+      <template v-else-if="errorMessage">
+        <div class="oc-card-header">
+          <h2>
             <translate>An error occurred while loading the public link</translate>
           </h2>
+        </div>
+        <div class="oc-card-body">
           <p class="oc-text-lead">{{ errorMessage }}</p>
-        </template>
-        <template v-else-if="passwordRequired">
-          <form @submit.prevent="resolvePublicLink">
-            <h2 class="oc-login-card-title">
+        </div>
+      </template>
+      <template v-else-if="passwordRequired">
+        <form @submit.prevent="resolvePublicLink">
+          <div class="oc-card-header">
+            <h2>
               <translate>This resource is password-protected.</translate>
             </h2>
+          </div>
+          <div class="oc-card-body">
             <oc-text-input
               ref="passwordInput"
               v-model="password"
@@ -31,7 +37,7 @@
               :label="passwordFieldLabel"
               type="password"
               class="oc-mb-s"
-            ></oc-text-input>
+            />
             <oc-button
               variation="primary"
               appearance="filled"
@@ -40,10 +46,10 @@
             >
               <translate>Continue</translate>
             </oc-button>
-          </form>
-        </template>
-      </div>
-      <div class="oc-login-card-footer">
+          </div>
+        </form>
+      </template>
+      <div class="oc-card-footer">
         <p>
           {{ configuration.currentTheme.general.slogan }}
         </p>
@@ -80,10 +86,6 @@ export default {
 
     passwordFieldLabel() {
       return this.$gettext('Enter password for public link')
-    },
-
-    backgroundImg() {
-      return this.configuration.currentTheme.loginPage.backgroundImg
     },
 
     logoImg() {
@@ -141,3 +143,15 @@ export default {
   }
 }
 </script>
+
+<style lang="scss">
+.oc-label {
+  margin-bottom: var(--oc-space-small) !important;
+}
+.oc-text-input-message {
+  text-align: center !important;
+}
+.oc-card-footer {
+  border-top: 1px solid var(--oc-color-input-border);
+}
+</style>
