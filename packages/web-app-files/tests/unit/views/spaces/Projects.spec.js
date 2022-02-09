@@ -101,6 +101,9 @@ function getMountedWrapper() {
       actions: {
         createModal: jest.fn()
       }
-    })
+    }),
+    stubs: {
+      translate: true
+    }
   })
 }
