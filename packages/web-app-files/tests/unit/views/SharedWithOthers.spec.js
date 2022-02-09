@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { getStore, localVue } from './views.setup.js'
+import { getNgettextMock, getStore, localVue } from './views.setup.js'
 import FileActions from '@files/src/mixins/fileActions.js'
 import SharedWithOthers from '@files/src/views/SharedWithOthers.vue'
 import SharedData from '@/__fixtures__/sharedFiles.js'
@@ -205,7 +205,8 @@ describe('SharedWithOthers', () => {
       mocks: {
         $route: {
           name: 'some-route'
-        }
+        },
+        $ngettext: getNgettextMock()
       }
     })
   }

@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import { localVue, getStore, getRouter } from './views.setup'
+import { localVue, getStore, getRouter, getNgettextMock } from './views.setup'
 import SharedWithMe from '@files/src/views/SharedWithMe.vue'
 import { ShareStatus, ShareTypes } from '@files/src/helpers/share'
 
@@ -195,7 +195,8 @@ function mountOptions({
         name: 'some-route',
         query
       },
-      $router: getRouter({ query })
+      $router: getRouter({ query }),
+      $ngettext: getNgettextMock()
     },
     setup: () => ({
       loadResourcesTask: {

@@ -35,6 +35,16 @@ localVue.use(GetTextPlugin, {
   silent: true
 })
 
+export const getNgettextMock = function () {
+  return jest.fn(function (msgid, plural, n) {
+    if (n > 1) {
+      return plural
+    } else {
+      return msgid
+    }
+  })
+}
+
 export const getRouter = ({ query = {} }) => ({
   afterEach: jest.fn(),
   replace: jest.fn(),
